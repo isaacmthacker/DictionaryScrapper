@@ -1,0 +1,78 @@
+<html>
+<head>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+</head>
+<body>
+<p id="ret"></p>
+<p id="hiddenp" style="display:none"></p>
+</body>
+<script>
+var par = document.getElementById("ret");
+var retPar = document.getElementById("hiddenp");
+function addToPar(text) {
+	par.innerHTML += text;	
+	par.innerHTML += "<br>";	
+}
+
+var words = [];
+var lets = "abcdefghijklmnopqrstuvwxyz".split("");
+for(var i = 0; i < lets.length; ++i) {
+	var letter = lets[i];
+	console.log("let", letter);
+	var page = 1;
+	var valid = true;
+	while(valid == true) {
+		if(page >= 100) {
+			break;
+		}
+		var url = "https://www.dictionary.com/list/" + letter + "/" + page.toString();
+		var fullUrl = "url=" + url;
+		console.log("calling with " + letter + " " + page.toString());
+		$.ajax({
+			url: "getDataFromPage.php?" + fullUrl,
+			success: function(result) {
+				if(result != null && result != "Invalid page") {
+					retPar.innerHTML = "";
+					retPar.innerHTML += result;
+					var lst = document.getElementsByTagName("main")[0].getElementsByTagName("ul")[0].getElementsByTagName("li");
+					for(var i = 0; i < lst.length; ++i) {
+						//if(lst[i].innerText.split(" ").length === 1) {
+							//addToPar(lst[i].innerText);
+							var w = lst[i].innerText;
+							//if(w.indexOf(".") == -1 && w.indexOf("-") == -1 && w.indexOf("'") == -1) {
+								words.push(w);
+							//}
+						//}
+					}
+				} else {
+					valid = false;
+					console.log("invalid page");
+				}
+				//console.log("done", page);
+			},
+			async: false
+		});
+		++page;
+	}
+}
+console.log(words.length);
+console.log("start join");
+var wordStr = words.join("<br>");
+console.log("end join");
+addToPar(wordStr);
+
+$.ajax({
+	type: "POST",
+	url : "writeToFile.php",
+	datatype: JSON,
+	data : {"words": words},
+	success : function(result) {
+		console.log(result);
+		console.log("done writing");
+	},
+	async: true,
+});
+
+
+</script>
+</html>
